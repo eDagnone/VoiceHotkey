@@ -40,7 +40,7 @@ said, press three keys
 press, Ctrl+Shift+n
 say, done
 
-said, play music
+said, adam --contains && said, play --contains && said, music --contains
 run, C:\Scripts\Batch\PlayMusic.bat
 say, Playing music
 
@@ -50,7 +50,6 @@ say, Your number is <var>.
 said, banana --contains
 say, I heard banana somewhere in the last sentence you said. Here's a photo.
 run, start C:\"Program Files"\"Internet Explorer"\iexplore.exe https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Banana-Single.jpg/1200px-Banana-Single.jpg --batch
-
 
 said, start dictation <var>
 type, <var>
@@ -66,10 +65,11 @@ say, That is not who I am.
 sleep, 5
 press, f
 
-said, command prompt <var> || batch command <var>
+said, command prompt <var> || said, batch command <var>
 run, <var> --batch
 
-
+said, buffer || alternate
+say, buffer
 #These are special functions.
 
 said, volume <var> || said, set speech <var>

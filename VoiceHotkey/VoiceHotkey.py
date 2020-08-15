@@ -15,16 +15,17 @@ def updateSettings():
         Bot_Volume = config.getfloat('Bot_Voice', 'Bot_Volume')
         Bot_Talking_Speed = config.getint('Bot_Voice', 'Bot_Talking_Speed')
         Silence_Buffer = config.getfloat('Your_Voice', 'Silence_Buffer')
-
+        globalVars.Noise_Threshold = config.getfloat('Your_Voice', 'Noise_Threshold')
         print("Successfully imported config")
     except:
         print("Failed to import Settings.cfg. Default values loaded.")
-        Bot_Volume = 1.0
+        Bot_Volume = 100
         Bot_Talking_Speed = 150
         Silence_Buffer = 0.3
+        globalVars.Noise_Threshold = 300
 
-    Talker.volume = float(Bot_Volume)
-    Talker.rate = Bot_Talking_Speed
+    Talker.engine.setProperty("volume", float(Bot_Volume)/100)
+    Talker.engine.setProperty("rate",  Bot_Talking_Speed)
     sr.Recognizer.non_speaking_duration = Silence_Buffer
     sr.Recognizer.pause_threshold = Silence_Buffer
 
@@ -36,7 +37,7 @@ def updateHotkeys():
         with open ('commands.txt', 'rt') as theFile:
             thisHotkey = Hotkey()
             for theLine in theFile:
-                lineText = theLine.replace('\n', '').replace('\r', '').replace(' || ', '||').replace(" --", "--")
+                lineText = theLine.replace('\n', '').replace('\r', '').replace(' || ', '||').replace( ' && ', '&&').replace(" --", "--")
                 actionType = ""
                 action = ""
 
@@ -46,13 +47,24 @@ def updateHotkeys():
                         hotkeys.append(thisHotkey)
                     thisHotkey = Hotkey()
                 elif re.search("\s*\#", lineText) == None: 
-                    isolatedEvents = lineText.split('||')
+                    isolatedEvents = []
+                    if '&&' in lineText:
+                        isolatedEvents = lineText.split('&&')
+                        thisHotkey.setCompareMode(False)
+                        print("Here")
+                    elif '||' in lineText:
+                        isolatedEvents = lineText.split('||')
+                        thisHotkey.setCompareMode(True)
+                    else:
+                        isolatedEvents = [lineText]
+                        #thisHotkey.setCompareMode(True)
+                    
                     for i in isolatedEvents:
                         arguements = i.split("--")
                         mainAction = arguements[0]
                         arguements.remove(arguements[0])
                         if len(arguements) == 0:
-                            arguements = ["Placeholder6748"]
+                            arguements = [""]
                         for a in range(len(arguements)):
                             arguements[a] = arguements[a].lower()
                     
@@ -93,65 +105,71 @@ class Talker:
 class globalVars:
     hotkeys = []
     UserVariable = ""
+    Noise_Threshold = 0
 
-class Action:
-    def __init__(self, actionType, action, arguements):
-        self.actionType = actionType
-        self.actionString = action
-        self.arguements = arguements
+class Action:   #A single line.
+    def __init__(self, actionType, arguement, modifiers):
+        self.type = actionType      #The type of action ex. Say,
+        self.arguement = arguement  #The "action string" ex. Yes, I do know Alexa.
+        self.modifiers = modifiers  #A modifier ex. --mute
                 
     def print(self):
-        print(self.actionType.upper() + ": " + self.actionString, end="")
-        for arg in self.arguements: 
-            if arg != "placeholder6748":
-                print(" --" + arg, end="")
+        print(self.type.upper() + ": " + self.arguement, end="")
+        for modifier in self.modifiers: 
+            if modifier != "":
+                print(" --" + modifier, end="")
         print("") #Newline
     
-    def run(self):
-        for arguement in self.arguements:
-            actionString2= self.actionString.replace("<var>", globalVars.UserVariable)
+    def run(self):  #run the action #NOTE - This runs once for each arguement given multiple arguements
+        for modifier in self.modifiers:
+            arg= self.arguement.replace("<var>", globalVars.UserVariable)
 
-            if self.actionType == "say":
-                if arguement == "mute":
-                    print(actionString2)
+            if self.type == "say":
+                if modifier == "mute":
+                    print(arg)
                 else:
-                    Talker.say(actionString2)
-
-            elif self.actionType == "run":
+                    Talker.say(arg)
+            elif self.type == "run":
                 try:
-                    if arguement == "batch":
-                        os.system(actionString2)
+                    if modifier == "batch":
+                        os.system(arg)
                     else:
-                        os.startfile(actionString2)
+                        os.startfile(arg)
                 except:
                     Talker.say("ERROR")
-                    print("The path you input, \"" + actionString2 + "\" could not be found. \nPlease ensure you copied the path correctly.") 
-
-            elif self.actionType == "press":
-                pressAndRelease(actionString2)
-
-            elif self.actionType == "type":
-                keyboard.write(actionString2)
-
-            elif self.actionType == "sleep":
-                time.sleep(float(actionString2))
-            elif self.actionType == "set_volume":
-                number = actionString2.replace("ten", "10").replace("nine", "9").replace("eight", "8").replace("seven", "7").replace("six", "6").replace("five", "5").replace("four", "4").replace("three", "3").replace("two", "2").replace("one", "1").replace("zero", "0").replace("mute", "0")
+                    print("The path you input, \"" + arg + "\" could not be found. \nPlease ensure you copied the path correctly.") 
+            elif self.type == "press":
                 try:
-                    Talker.engine.setProperty("volume", float(number)/100)
+                    pressAndRelease(arg, float(modifier))
                 except:
-                    print("Invalid number: " + actionString2)
-            elif self.actionType == "update_hotkeys":
+                    print("Invalid number: " + modifier + ". Please change the modifier in the config file to a number.")
+                    pressAndRelease(arg)
+                    print("Keys have been presed for 0.2 seconds.")
+
+            elif self.type == "type":
+                keyboard.write(arg)
+
+            elif self.type == "sleep":
+                time.sleep(float(arg))
+            elif self.type == "set_volume":
+                arg = arg.replace("ten", "10").replace("nine", "9").replace("eight", "8").replace("seven", "7").replace("six", "6").replace("five", "5").replace("four", "4").replace("three", "3").replace("two", "2").replace("one", "1").replace("zero", "0").replace("mute", "0")
+                try:
+                    Talker.engine.setProperty("volume", float(arg)/100)
+                except:
+                    print("Invalid number: " + arg)
+            elif self.type == "update_hotkeys":
                 updateHotkeys()
             else:
-                print("ERROR: " + self.actionType + " not recognized")
+                print("ERROR: " + self.type + " not recognized")
           
 class Hotkey:
     def __init__(self):
-        self.triggers = []
-        self.actions = []
-        self.layer = -1
-
+        self.triggers = []          #array of actions that trigger this hotkey (the full line, separated by OR's)
+        self.compareMode = True     #1 is OR, 0 is AND
+        self.actions = []           #array of actions that the hotkey is made up of (the full line)
+        self.layer = -1             #Will be used for nesting (later)
+    def setCompareMode(self, mode):
+        self.compareMode = mode
     def print(self, print_actions=1):
         for i in self.triggers:
             i.print()
@@ -163,7 +181,7 @@ class Hotkey:
             i.run()
 
     def appendAction(self, action):
-        if action.actionType == "said":
+        if action.type == "said":
             self.triggers.append(action)
         else:
             self.actions.append(action)    
@@ -171,28 +189,31 @@ class Hotkey:
     def isValid(self):
         return len(self.triggers)!=0
 
-    def wasTriggered(self, wordsSaidRaw):
+    def wasTriggered(self, wordsSaidRaw):   #currently only triggered by "said" lines
         wordsSaid = wordsSaidRaw.lower()
         condition = False
         for trigger in self.triggers:
-            for arguement in trigger.arguements:
-                if arguement == "contains":
-                    condition = (trigger.actionString.lower() in wordsSaid)
-                elif arguement == "startswith":
-                    condition = wordsSaid.startswith(trigger.actionString.lower())
-                elif arguement == "regex":
-                    condition = re.fullmatch(trigger.actionString, wordsSaid)
-                elif arguement == "placeholder6748":
-                    condition = wordsSaid == trigger.actionString.lower()
+            for modifier in trigger.modifiers:
+                if modifier == "contains":
+                    condition = (trigger.arguement.lower() in wordsSaid)
+                elif modifier == "startswith":
+                    condition = wordsSaid.startswith(trigger.arguement.lower())
+                elif modifier == "regex":
+                    condition = re.fullmatch(trigger.arguement, wordsSaid)
+                elif modifier == "":
+                    condition = wordsSaid == trigger.arguement.lower()
                 else:
-                    print("INVALID ARGUEMENT: --" + arguement)
-                if trigger.actionString.find("<var>") != -1:
-                    condition = self.__varEvaluator(trigger.actionString.lower(), wordsSaid)
-                if condition:
+                    print("INVALID ARGUEMENT: --" + modifier)
+                if trigger.arguement.find("<var>") != -1:
+                    condition = self.__varEvaluator(trigger.arguement.lower(), wordsSaid)
+                if self.compareMode and condition:  #OR mode, a condition is true
                     return True
-        return False
+                elif not self.compareMode and not condition: #AND mode, a condition is false
+                   return False
 
-    def __varEvaluator(self, actionString, wordsSaid):
+        return not self.compareMode
+
+    def __varEvaluator(self, actionString, wordsSaid): #splits what was said to see if the command was correct, then assigns a value to var.
         phrase = actionString.lower()
         splitPhrase = phrase.split("<var>")
         varInWord = wordsSaid
@@ -208,14 +229,12 @@ class Hotkey:
 
 #Setup
 
-
 updateSettings()
-
 print("Calibrating for ambient Noise...")
 r = sr.Recognizer()
 #with sr.Microphone() as source:
     #r.adjust_for_ambient_noise(source, 1)
-r.energy_threshold = 250  
+r.energy_threshold = globalVars.Noise_Threshold  
 print("[DEBUG] Energy Threshold: " + str(r.energy_threshold))
 r.dynamic_energy_threshold = False
 print("")
@@ -249,4 +268,3 @@ while 1:
                 print("CHECK INTERNET CONNECTION: \n Could not request results from Google Speech Recognition service; {0}".format(e))
         except sr.WaitTimeoutError:
             print("timeout")
-
