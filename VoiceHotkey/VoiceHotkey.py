@@ -1,7 +1,3 @@
-
-#---------------------------------------------------------------------------------------------------------------
-    #Setup stuff. You don't need to touch this.
-#---------------------------------------------------------------------------------------------------------------
 import speech_recognition as sr
 import keyboard, time, pyttsx3, os, re, configparser, pkg_resources.py2_warn, pyttsx3.drivers, pyttsx3.drivers.sapi5
 
@@ -36,44 +32,44 @@ def updateSettings():
 def updateHotkeys():
     i = 0
     hotkeys = []
-    #try:
-    with open ('commands.txt', 'rt') as theFile:
-        thisHotkey = Hotkey()
-        for theLine in theFile:
-            lineText = theLine.replace('\n', '').replace('\r', '').replace(' || ', '||').replace(" --", "--")
-            actionType = ""
-            action = ""
+    try:
+        with open ('commands.txt', 'rt') as theFile:
+            thisHotkey = Hotkey()
+            for theLine in theFile:
+                lineText = theLine.replace('\n', '').replace('\r', '').replace(' || ', '||').replace(" --", "--")
+                actionType = ""
+                action = ""
 
-            #Use blank lines to separate different hotkeys
-            if re.fullmatch("\s*", lineText) or lineText == "end of file - do not delete":
-                if thisHotkey.isValid():
-                    hotkeys.append(thisHotkey)
-                thisHotkey = Hotkey()
-            elif re.search("\s*\#", lineText) == None: 
-                isolatedEvents = lineText.split('||')
-                for i in isolatedEvents:
-                    arguements = i.split("--")
-                    mainAction = arguements[0]
-                    arguements.remove(arguements[0])
-                    if len(arguements) == 0:
-                        arguements = ["Placeholder6748"]
-                    for a in range(len(arguements)):
-                        arguements[a] = arguements[a].lower()
+                #Use blank lines to separate different hotkeys
+                if re.fullmatch("\s*", lineText) or lineText == "end of file - do not delete":
+                    if thisHotkey.isValid():
+                        hotkeys.append(thisHotkey)
+                    thisHotkey = Hotkey()
+                elif re.search("\s*\#", lineText) == None: 
+                    isolatedEvents = lineText.split('||')
+                    for i in isolatedEvents:
+                        arguements = i.split("--")
+                        mainAction = arguements[0]
+                        arguements.remove(arguements[0])
+                        if len(arguements) == 0:
+                            arguements = ["Placeholder6748"]
+                        for a in range(len(arguements)):
+                            arguements[a] = arguements[a].lower()
                     
-                    #Split the command (ex. say) from the message (ex. Hello World)
-                    actionType = ""
-                    action = ""
-                    for j in range(0, mainAction.find(",")):
-                        actionType += mainAction[j]
-                    for j in range(mainAction.find(',') + 2, len(mainAction)):
-                        action += mainAction[j]
+                        #Split the command (ex. say) from the message (ex. Hello World)
+                        actionType = ""
+                        action = ""
+                        for j in range(0, mainAction.find(",")):
+                            actionType += mainAction[j]
+                        for j in range(mainAction.find(',') + 2, len(mainAction)):
+                            action += mainAction[j]
 
-                    TheAction = Action(actionType.lower(), action, arguements)
-                    thisHotkey.appendAction(TheAction)
-    #except:
-          #  print("CRITICAL ERROR - Failed to load Commands.txt from local directory")
-          #  print("Please verify that Commands.txt is present, otherwise this program will do nothing.")
-          #  os.startfile("")
+                        TheAction = Action(actionType.lower(), action, arguements)
+                        thisHotkey.appendAction(TheAction)
+    except:
+        print("CRITICAL ERROR - Failed to load Commands.txt from local directory")
+        print("Please verify that Commands.txt is present, otherwise this program will do nothing.")
+        os.startfile("")
 
     globalVars.hotkeys = hotkeys
     printHotkeys(0)
@@ -167,7 +163,6 @@ class Hotkey:
             i.run()
 
     def appendAction(self, action):
-        #text2int(action.action)
         if action.actionType == "said":
             self.triggers.append(action)
         else:
@@ -220,12 +215,13 @@ print("Calibrating for ambient Noise...")
 r = sr.Recognizer()
 #with sr.Microphone() as source:
     #r.adjust_for_ambient_noise(source, 1)
-r.energy_threshold = 200  
+r.energy_threshold = 250  
 print("[DEBUG] Energy Threshold: " + str(r.energy_threshold))
 r.dynamic_energy_threshold = False
 print("")
 updateHotkeys()
 
+#Main Execution Loop
 while 1:
 
     with sr.Microphone() as source:

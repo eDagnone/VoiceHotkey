@@ -4,7 +4,6 @@ HOW TO RUN:
 1. Add your voice commands in the Commands.txt file (more instructions within that file)
 2. (Optional) Edit the Settings.cfg file with notepad
 3. Double-click on VoiceHotkey.exe
-=================================================================================
 
 
 
@@ -13,6 +12,8 @@ HOW TO RUN:
 =========================================================================================
 HOW TO MAKE YOUR OWN COMMMANDS
 =========================================================================================
+
+Open the Commands.txt file with any text editor (ex. Notepad).
 
 Each line is made up of an Action Type, an Arguement, and (optionally) a Modifier
 Putting a bunch of lines makes a command
