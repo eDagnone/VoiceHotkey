@@ -142,9 +142,9 @@ class Action:   #A single line.
                 try:
                     pressAndRelease(arg, float(modifier))
                 except:
-                    print("Invalid number: " + modifier + ". Please change the modifier in the config file to a number.")
+                    if not modifier == "":
+                        print("Invalid number: " + modifier + ". Please change the modifier in the config file to a number. /n Keys have been presed for 0.2 seconds.")
                     pressAndRelease(arg)
-                    print("Keys have been presed for 0.2 seconds.")
 
             elif self.type == "type":
                 keyboard.write(arg)

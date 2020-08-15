@@ -27,6 +27,8 @@
 #			"--mute"		-Prints the specified text to the console, but doesn't actually say it out loud
 #		Works with the "run" Action Type:
 #			"--batch"		-Runs the arguement as a batch command rather than a program that needs to be opened.
+#		Works with the "press"  Action Type:
+#			"--0.35"		-Presses the keys for the specified number of seconds (you can put any number here, I just chose 0.35)
 #	
 #==========================================================================================
 
@@ -40,7 +42,7 @@ said, press three keys
 press, Ctrl+Shift+n
 say, done
 
-said, adam --contains && said, play --contains && said, music --contains
+said, play music
 run, C:\Scripts\Batch\PlayMusic.bat
 say, Playing music
 
@@ -56,7 +58,7 @@ type, <var>
 say, <var> --mute
 
 said, Hey Siri
-run, C:\Program Files (x86)\Google\Chrome\Application\chrome.exe\
+run, C:\Program Files (x86)\Google\Chrome\Application\chrome.exe
 say, No.
 press, Ctrl+Shift+n
 type, https://youtu.be/v1c2OfAzDTI?t=42&autoplay=1
@@ -68,8 +70,12 @@ press, f
 said, command prompt <var> || said, batch command <var>
 run, <var> --batch
 
-said, buffer || alternate
-say, buffer
+said, thing one --contains && said, thing two --contains
+say, You said something about thing 1 and thing 2.
+
+
+
+
 #These are special functions.
 
 said, volume <var> || said, set speech <var>
